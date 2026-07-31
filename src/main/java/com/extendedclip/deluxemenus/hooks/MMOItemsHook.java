@@ -5,12 +5,10 @@ import com.extendedclip.deluxemenus.cache.SimpleCache;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 
 import net.Indyuce.mmoitems.MMOItems;
 import net.Indyuce.mmoitems.api.Type;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +45,7 @@ public class MMOItemsHook implements ItemHook, SimpleCache {
 
         ItemStack mmoItem = null;
         try {
-            mmoItem = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
+            mmoItem = plugin.getScheduler().callSync(() -> {
                 ItemStack item = MMOItems.plugin.getItem(itemType, splitArgs[1]);
 
                 if (item == null) {
@@ -57,8 +55,8 @@ public class MMOItemsHook implements ItemHook, SimpleCache {
                 cache.put(arguments[0], item);
 
                 return item.clone();
-            }).get();
-        } catch (InterruptedException | ExecutionException e) {
+            });
+        } catch (Exception e) {
             plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Error getting MMOItem synchronously.");
         }
 

@@ -5,6 +5,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.clip.placeholderapi.PlaceholderAPI;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.entity.Player;
@@ -16,16 +19,31 @@ public class StringUtils {
     private final static Pattern HEX_PATTERN = Pattern
             .compile("&(#[a-f0-9]{6})", Pattern.CASE_INSENSITIVE);
 
+    private final static Pattern MINI_MESSAGE_TAG_PATTERN = Pattern.compile("<[^<>]+>");
+
     /**
      * Translates the ampersand color codes like '&7' to their section symbol counterparts like '§7'.
      * <br>
      * It also translates hex colors like '&#aaFF00' to their section symbol counterparts like '§x§a§a§F§F§0§0'.
+     * <br>
+     * MiniMessage tags (e.g. '&lt;red&gt;', '&lt;gradient:red:blue&gt;') are also translated if present,
+     * and can be freely mixed with legacy '&' codes in the same string.
      *
      * @param input The string in which to translate the color codes.
      * @return The string with the translated colors.
      */
     @NotNull
     public static String color(@NotNull String input) {
+        if (MINI_MESSAGE_TAG_PATTERN.matcher(input).find()) {
+            try {
+                final Component parsed = MiniMessage.miniMessage().deserialize(input);
+                input = LegacyComponentSerializer.legacySection().serialize(parsed);
+            } catch (final Exception ignored) {
+                // Not valid MiniMessage (or a placeholder produced an invalid tag). Fall back to
+                // treating the string as legacy-only rather than breaking the menu.
+            }
+        }
+
         // Hex Support for 1.16.1+
         Matcher m = HEX_PATTERN.matcher(input);
         if (VersionHelper.IS_HEX_VERSION) {

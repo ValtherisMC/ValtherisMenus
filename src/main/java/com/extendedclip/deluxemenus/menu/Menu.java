@@ -199,7 +199,7 @@ public class Menu {
         }
 
         if (close) {
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            plugin.getScheduler().runAtEntity(player, () -> {
                 player.closeInventory();
                 cleanInventory(plugin, player);
             });
@@ -294,7 +294,7 @@ public class Menu {
             return;
         }
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.getScheduler().runAsync(() -> {
 
             Set<MenuItem> activeItems = new HashSet<>();
 
@@ -383,7 +383,7 @@ public class Menu {
 
             final boolean updatePlaceholders = update;
 
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            plugin.getScheduler().runAtEntity(viewer, () -> {
                 if(options.refresh()) {
                     holder.startRefreshTask();
                 }
@@ -400,7 +400,7 @@ public class Menu {
         }
       });
 
-      Bukkit.getScheduler().runTask(plugin, () -> {
+      plugin.getScheduler().runAtEntity(viewer, () -> {
         DeluxeMenusOpenMenuEvent openEvent = new DeluxeMenusOpenMenuEvent(viewer, holder);
         Bukkit.getPluginManager().callEvent(openEvent);
       });

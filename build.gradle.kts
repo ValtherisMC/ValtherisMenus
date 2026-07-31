@@ -21,6 +21,7 @@ repositories {
     maven("https://repo.momirealms.net/releases/")
     maven("https://repo.nexomc.com/releases/")
     maven("https://repo.oraxen.com/releases")
+    maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://jitpack.io")
 }
 
