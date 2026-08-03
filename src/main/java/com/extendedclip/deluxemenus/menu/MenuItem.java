@@ -608,6 +608,17 @@ public class MenuItem {
                 .collect(Collectors.toList());
     }
 
+    protected List<Component> getMenuItemLoreComponents(@NotNull final MenuHolder holder, @NotNull final List<String> lore) {
+        return lore.stream()
+                .map(holder::setPlaceholdersAndArguments)
+                .map(line -> line.split("\n"))
+                .flatMap(Arrays::stream)
+                .map(line -> line.split("\\\\n"))
+                .flatMap(Arrays::stream)
+                .map(StringUtils::colorComponent)
+                .collect(Collectors.toList());
+    }
+
     private @NotNull org.bukkit.inventory.meta.components.CustomModelDataComponent parseCustomModelDataComponent(
             @NotNull final CustomModelDataComponent unparsedComponent,
             @NotNull final org.bukkit.inventory.meta.components.CustomModelDataComponent component,
