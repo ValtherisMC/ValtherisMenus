@@ -71,4 +71,10 @@ tasks {
             expand("version" to rootProject.version)
         }
     }
+
+    // shadowJar and the plain jar task both write to build/libs/DeluxeMenus-<version>.jar; make sure
+    // the shaded jar (which bundles bstats/Adventure/nashorn) is what's left behind after a build.
+    assemble {
+        dependsOn(shadowJar)
+    }
 }
