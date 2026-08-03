@@ -21,6 +21,16 @@ public class StringUtils {
 
     private final static Pattern MINI_MESSAGE_TAG_PATTERN = Pattern.compile("<[^<>]+>");
 
+    // Bukkit/Spigot only understands hex colors encoded as repeated "&x&r&r&g&g&b&b" section
+    // sequences, not MiniMessage's/Kyori's default "&#rrggbb" shorthand. Without both hexColors()
+    // and useUnusualXRepeatedCharacterHexFormat(), gradients get downsampled to the nearest of the
+    // 16 legacy colors (or produce unrecognised codes) instead of rendering as an actual gradient.
+    private final static LegacyComponentSerializer MINI_MESSAGE_LEGACY_SERIALIZER = LegacyComponentSerializer.builder()
+            .character(LegacyComponentSerializer.SECTION_CHAR)
+            .hexColors()
+            .useUnusualXRepeatedCharacterHexFormat()
+            .build();
+
     /**
      * Translates the ampersand color codes like '&7' to their section symbol counterparts like '§7'.
      * <br>
@@ -37,7 +47,7 @@ public class StringUtils {
         if (MINI_MESSAGE_TAG_PATTERN.matcher(input).find()) {
             try {
                 final Component parsed = MiniMessage.miniMessage().deserialize(input);
-                input = LegacyComponentSerializer.legacySection().serialize(parsed);
+                input = MINI_MESSAGE_LEGACY_SERIALIZER.serialize(parsed);
             } catch (final Exception ignored) {
                 // Not valid MiniMessage (or a placeholder produced an invalid tag). Fall back to
                 // treating the string as legacy-only rather than breaking the menu.
