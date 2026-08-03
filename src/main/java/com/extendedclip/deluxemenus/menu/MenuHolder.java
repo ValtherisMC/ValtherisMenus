@@ -4,6 +4,7 @@ import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.scheduler.TaskHandle;
 import com.extendedclip.deluxemenus.utils.StringUtils;
+import com.extendedclip.deluxemenus.utils.VersionHelper;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -297,11 +298,20 @@ public class MenuHolder implements InventoryHolder {
                         ItemMeta meta = i.getItemMeta();
 
                         if (item.options().displayNameHasPlaceholders() && item.options().displayName().isPresent()) {
-                            meta.setDisplayName(StringUtils.color(setPlaceholdersAndArguments(item.options().displayName().get())));
+                            final String displayName = setPlaceholdersAndArguments(item.options().displayName().get());
+                            if (VersionHelper.IS_COMPONENT) {
+                                meta.displayName(StringUtils.colorComponent(displayName));
+                            } else {
+                                meta.setDisplayName(StringUtils.color(displayName));
+                            }
                         }
 
                         if (item.options().loreHasPlaceholders()) {
-                            meta.setLore(item.getMenuItemLore(getHolder(), item.options().lore()));
+                            if (VersionHelper.IS_COMPONENT) {
+                                meta.lore(item.getMenuItemLoreComponents(getHolder(), item.options().lore()));
+                            } else {
+                                meta.setLore(item.getMenuItemLore(getHolder(), item.options().lore()));
+                            }
                         }
 
                         i.setItemMeta(meta);
