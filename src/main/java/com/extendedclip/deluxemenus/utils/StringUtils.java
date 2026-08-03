@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.md_5.bungee.api.ChatColor;
@@ -96,15 +97,21 @@ public class StringUtils {
      */
     @NotNull
     public static Component colorComponent(@NotNull final String input) {
+        final Component component;
         try {
             final String miniMessageInput = LEGACY_CODE_PATTERN.matcher(input).replaceAll(StringUtils::legacyCodeToTag);
-            return MiniMessage.miniMessage().deserialize(miniMessageInput);
+            component = MiniMessage.miniMessage().deserialize(miniMessageInput);
         } catch (final Exception ignored) {
             // Not valid MiniMessage once legacy codes are converted to tags (e.g. a stray '<' or '>'
             // in the text that isn't part of a tag). Fall back to plain legacy coloring so the line
             // still renders, just without any sprite/object tags it may have contained.
-            return MINI_MESSAGE_LEGACY_SERIALIZER.deserialize(color(input));
+            return MINI_MESSAGE_LEGACY_SERIALIZER.deserialize(color(input)).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
         }
+
+        // Bukkit's legacy setDisplayName(String)/setLore(List<String>) silently default item text to
+        // non-italic; the raw Component API doesn't, so vanilla's "lore is italic by default" behavior
+        // leaks through unless we set the same default explicitly here.
+        return component.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
     }
 
     @NotNull

@@ -106,7 +106,9 @@ public class ClickActionTask implements Runnable {
                 break;
 
             case CONSOLE:
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), executable);
+                // Bukkit.dispatchCommand() requires the global tick thread on Folia; this task runs on
+                // the clicking player's entity/region thread, so hop over instead of dispatching directly.
+                plugin.getScheduler().runGlobal(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), executable));
                 break;
 
             case MINI_MESSAGE:
