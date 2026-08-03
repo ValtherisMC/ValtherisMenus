@@ -1,6 +1,7 @@
 package com.extendedclip.deluxemenus.utils;
 
 import java.util.Map;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,6 +21,22 @@ public class StringUtils {
             .compile("&(#[a-f0-9]{6})", Pattern.CASE_INSENSITIVE);
 
     private final static Pattern MINI_MESSAGE_TAG_PATTERN = Pattern.compile("<[^<>]+>");
+
+    // Matches a legacy '&' or already-translated '§' code: either a 6-digit hex ("&#rrggbb")
+    // or a single format/color character (e.g. "&c", "&l", "&r").
+    private final static Pattern LEGACY_CODE_PATTERN = Pattern
+            .compile("[&§](#[a-f0-9]{6}|[0-9a-fk-or])", Pattern.CASE_INSENSITIVE);
+
+    private final static Map<Character, String> LEGACY_CODE_TO_TAG_NAME = Map.ofEntries(
+            Map.entry('0', "black"), Map.entry('1', "dark_blue"), Map.entry('2', "dark_green"),
+            Map.entry('3', "dark_aqua"), Map.entry('4', "dark_red"), Map.entry('5', "dark_purple"),
+            Map.entry('6', "gold"), Map.entry('7', "gray"), Map.entry('8', "dark_gray"),
+            Map.entry('9', "blue"), Map.entry('a', "green"), Map.entry('b', "aqua"),
+            Map.entry('c', "red"), Map.entry('d', "light_purple"), Map.entry('e', "yellow"),
+            Map.entry('f', "white"), Map.entry('k', "obfuscated"), Map.entry('l', "bold"),
+            Map.entry('m', "strikethrough"), Map.entry('n', "underlined"), Map.entry('o', "italic"),
+            Map.entry('r', "reset")
+    );
 
     // Bukkit/Spigot only understands hex colors encoded as repeated "&x&r&r&g&g&b&b" section
     // sequences, not MiniMessage's/Kyori's default "&#rrggbb" shorthand. Without both hexColors()
@@ -63,6 +80,42 @@ public class StringUtils {
         }
 
         return ChatColor.translateAlternateColorCodes('&', input);
+    }
+
+    /**
+     * Like {@link #color(String)}, but returns a {@link Component} instead of collapsing the result
+     * to a legacy string. This is required for MiniMessage tags that have no legacy equivalent, such
+     * as {@code <sprite:...>}, which embed a non-text object (e.g. a resource pack icon) that a plain
+     * '§'-coded string cannot represent.
+     * <br>
+     * Legacy '&' codes (and hex colors) are converted to their MiniMessage tag equivalents first, so
+     * the whole string can be parsed by MiniMessage in a single pass alongside any native tags.
+     *
+     * @param input The string in which to translate the color codes.
+     * @return The parsed component.
+     */
+    @NotNull
+    public static Component colorComponent(@NotNull final String input) {
+        try {
+            final String miniMessageInput = LEGACY_CODE_PATTERN.matcher(input).replaceAll(StringUtils::legacyCodeToTag);
+            return MiniMessage.miniMessage().deserialize(miniMessageInput);
+        } catch (final Exception ignored) {
+            // Not valid MiniMessage once legacy codes are converted to tags (e.g. a stray '<' or '>'
+            // in the text that isn't part of a tag). Fall back to plain legacy coloring so the line
+            // still renders, just without any sprite/object tags it may have contained.
+            return MINI_MESSAGE_LEGACY_SERIALIZER.deserialize(color(input));
+        }
+    }
+
+    @NotNull
+    private static String legacyCodeToTag(@NotNull final MatchResult match) {
+        final String code = match.group(1);
+        if (code.charAt(0) == '#') {
+            return "<" + code + ">";
+        }
+
+        final String tagName = LEGACY_CODE_TO_TAG_NAME.get(Character.toLowerCase(code.charAt(0)));
+        return tagName == null ? match.group() : "<" + tagName + ">";
     }
 
     @NotNull

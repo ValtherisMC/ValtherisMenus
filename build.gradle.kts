@@ -56,7 +56,10 @@ tasks {
     shadowJar {
         relocate("org.objectweb.asm", "com.extendedclip.deluxemenus.libs.asm")
         relocate("org.openjdk.nashorn", "com.extendedclip.deluxemenus.libs.nashorn")
-        relocate("net.kyori", "com.extendedclip.deluxemenus.libs.adventure")
+        // net.kyori (Adventure) is intentionally NOT relocated: ItemMeta#displayName(Component)/
+        // lore(List<Component>) (needed to render MiniMessage object tags like <sprite:...> in item
+        // tooltips) require the exact same Component class Paper's own API expects. A relocated copy
+        // would be a different class to the JVM and Paper's native item meta methods would reject it.
         relocate("org.bstats", "com.extendedclip.deluxemenus.libs.bstats")
         archiveFileName.set("DeluxeMenus-${rootProject.version}.jar")
     }
