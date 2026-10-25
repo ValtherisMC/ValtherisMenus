@@ -134,12 +134,34 @@ public class SkullUtils {
             return head;
         }
 
-        final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerName);
+        final org.bukkit.entity.Player onlinePlayer = Bukkit.getPlayerExact(playerName);
+        if (onlinePlayer != null && VersionHelper.HAS_PLAYER_PROFILES && !onlinePlayer.getPlayerProfile().getTextures().isEmpty()) {
+            headMeta.setOwnerProfile(onlinePlayer.getPlayerProfile());
+            head.setItemMeta(headMeta);
+            return head;
+        }
 
-        if (VersionHelper.HAS_PLAYER_PROFILES && offlinePlayer.getPlayerProfile().getTextures().isEmpty()) {
-            // updates the Player Profile and populates textures for offline players - for some reason this doesn't populate when getting the Profile first time
-            headMeta.setOwnerProfile(offlinePlayer.getPlayerProfile().update().join());
-        } else if (!VersionHelper.IS_SKULL_OWNER_LEGACY) {
+        if (VersionHelper.HAS_PLAYER_PROFILES) {
+            try {
+                final PlayerProfile profile = Bukkit.createPlayerProfile(playerName);
+                if (profile.getTextures().isEmpty()) {
+                    final PlayerProfile updated = profile.update().join();
+                    if (!updated.getTextures().isEmpty()) {
+                        headMeta.setOwnerProfile(updated);
+                        head.setItemMeta(headMeta);
+                        return head;
+                    }
+                } else {
+                    headMeta.setOwnerProfile(profile);
+                    head.setItemMeta(headMeta);
+                    return head;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerName);
+        if (!VersionHelper.IS_SKULL_OWNER_LEGACY) {
             headMeta.setOwningPlayer(offlinePlayer);
         } else {
             headMeta.setOwner(offlinePlayer.getName());
