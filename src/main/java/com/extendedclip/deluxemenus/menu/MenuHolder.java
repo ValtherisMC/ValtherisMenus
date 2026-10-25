@@ -2,15 +2,14 @@ package com.extendedclip.deluxemenus.menu;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
+import com.extendedclip.deluxemenus.scheduler.TaskHandle;
 import com.extendedclip.deluxemenus.utils.StringUtils;
-import org.bukkit.Bukkit;
+import com.extendedclip.deluxemenus.utils.VersionHelper;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,8 +28,8 @@ public class MenuHolder implements InventoryHolder {
     private Player placeholderPlayer;
     private String menuName;
     private Set<MenuItem> activeItems;
-    private BukkitTask updateTask = null;
-    private BukkitTask refreshTask = null;
+    private TaskHandle updateTask = null;
+    private TaskHandle refreshTask = null;
     private Inventory inventory;
     private boolean updating;
     private boolean parsePlaceholdersInArguments;
@@ -55,7 +54,7 @@ public class MenuHolder implements InventoryHolder {
         return viewer.getName();
     }
 
-    public BukkitTask getUpdateTask() {
+    public TaskHandle getUpdateTask() {
         return updateTask;
     }
 
@@ -138,7 +137,7 @@ public class MenuHolder implements InventoryHolder {
 
         setUpdating(true);
 
-        Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
+        this.plugin.getScheduler().runAsync(() -> {
 
             final Set<MenuItem> active = new HashSet<>();
 
@@ -176,7 +175,7 @@ public class MenuHolder implements InventoryHolder {
                 Menu.closeMenu(plugin, getViewer(), true);
             }
 
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            plugin.getScheduler().runAtEntity(getViewer(), () -> {
 
                 boolean update = false;
 
@@ -241,12 +240,7 @@ public class MenuHolder implements InventoryHolder {
             stopRefreshTask();
         }
 
-        refreshTask = new BukkitRunnable() {
-            @Override
-            public void run() {
-                refreshMenu();
-            }
-        }.runTaskTimerAsynchronously(plugin, 20L,
+        refreshTask = plugin.getScheduler().runAsyncTimer(this::refreshMenu, 20L,
                 20L * Menu.getMenuByName(menuName)
                         .map(Menu::options)
                         .map(MenuOptions::refreshInterval)
@@ -259,21 +253,21 @@ public class MenuHolder implements InventoryHolder {
             stopPlaceholderUpdate();
         }
 
-        updateTask = new BukkitRunnable() {
+        updateTask = plugin.getScheduler().runAsyncTimer(() -> {
 
-            @Override
-            public void run() {
+            if (updating) {
+                return;
+            }
 
-                if (updating) {
-                    return;
-                }
+            Set<MenuItem> items = getActiveItems();
 
-                Set<MenuItem> items = getActiveItems();
+            if (items == null) {
+                return;
+            }
 
-                if (items == null) {
-                    return;
-                }
-
+            // Item/inventory mutation must happen on the region thread that owns the viewer (required on
+            // Folia; harmless elsewhere), so hop back from this async timer before touching item meta.
+            plugin.getScheduler().runAtEntity(getViewer(), () -> {
                 for (MenuItem item : items) {
 
                     if (item.options().updatePlaceholders()) {
@@ -304,20 +298,29 @@ public class MenuHolder implements InventoryHolder {
                         ItemMeta meta = i.getItemMeta();
 
                         if (item.options().displayNameHasPlaceholders() && item.options().displayName().isPresent()) {
-                            meta.setDisplayName(StringUtils.color(setPlaceholdersAndArguments(item.options().displayName().get())));
+                            final String displayName = setPlaceholdersAndArguments(item.options().displayName().get());
+                            if (VersionHelper.IS_COMPONENT) {
+                                meta.displayName(StringUtils.colorComponent(displayName));
+                            } else {
+                                meta.setDisplayName(StringUtils.color(displayName));
+                            }
                         }
 
                         if (item.options().loreHasPlaceholders()) {
-                            meta.setLore(item.getMenuItemLore(getHolder(), item.options().lore()));
+                            if (VersionHelper.IS_COMPONENT) {
+                                meta.lore(item.getMenuItemLoreComponents(getHolder(), item.options().lore()));
+                            } else {
+                                meta.setLore(item.getMenuItemLore(getHolder(), item.options().lore()));
+                            }
                         }
 
                         i.setItemMeta(meta);
                         i.setAmount(amt);
                     }
                 }
-            }
+            });
 
-        }.runTaskTimerAsynchronously(plugin, 20L,
+        }, 20L,
                 20L * Menu.getMenuByName(menuName)
                         .map(Menu::options)
                         .map(MenuOptions::updateInterval)

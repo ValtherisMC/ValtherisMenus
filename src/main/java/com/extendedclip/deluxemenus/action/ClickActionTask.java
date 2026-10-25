@@ -11,13 +11,12 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.logging.Level;
 
-public class ClickActionTask extends BukkitRunnable {
+public class ClickActionTask implements Runnable {
 
     private final DeluxeMenus plugin;
     private final UUID uuid;
@@ -107,7 +106,9 @@ public class ClickActionTask extends BukkitRunnable {
                 break;
 
             case CONSOLE:
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), executable);
+                // Bukkit.dispatchCommand() requires the global tick thread on Folia; this task runs on
+                // the clicking player's entity/region thread, so hop over instead of dispatching directly.
+                plugin.getScheduler().runGlobal(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), executable));
                 break;
 
             case MINI_MESSAGE:

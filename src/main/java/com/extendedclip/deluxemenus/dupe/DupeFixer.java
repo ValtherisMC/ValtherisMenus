@@ -55,8 +55,8 @@ public class DupeFixer extends Listener {
 
     @EventHandler
     private void onLogin(@NotNull final PlayerJoinEvent event) {
-        plugin.getServer().getScheduler().runTaskLater(
-                plugin,
+        plugin.getScheduler().runAtEntityDelayed(
+                event.getPlayer(),
                 () -> {
                     for (final ItemStack itemStack : event.getPlayer().getInventory().getContents()) {
                         if (itemStack == null) continue;
