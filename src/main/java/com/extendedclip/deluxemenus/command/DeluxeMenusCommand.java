@@ -35,7 +35,7 @@ public class DeluxeMenusCommand implements TabExecutor {
     }
 
     public boolean register() {
-        final PluginCommand command = this.plugin.getCommand("deluxemenus");
+        final PluginCommand command = this.plugin.getCommand("valtherismenus");
         if (command == null) {
             return false;
         }

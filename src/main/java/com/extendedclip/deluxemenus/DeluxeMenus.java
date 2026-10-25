@@ -293,6 +293,14 @@ public class DeluxeMenus extends JavaPlugin {
             this.itemHooks.put("executableitems", new ExecutableItemsHook());
         }
 
+        if (Bukkit.getPluginManager().isPluginEnabled("ValtherisItems")) {
+            com.valtheris.valtherisitems.ValtherisItemsPlugin viPlugin =
+                    (com.valtheris.valtherisitems.ValtherisItemsPlugin) Bukkit.getPluginManager().getPlugin("ValtherisItems");
+            if (viPlugin != null) {
+                this.itemHooks.put("valtherisitems", new ValtherisItemsHook(viPlugin.api()));
+            }
+        }
+
         if (Bukkit.getPluginManager().isPluginEnabled("ExecutableBlocks")) {
             this.itemHooks.put("executableblocks", new ExecutableBlocksHook());
         }

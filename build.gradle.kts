@@ -43,6 +43,8 @@ dependencies {
 
     compileOnly(libs.papi)
 
+    compileOnly(fileTree(mapOf("dir" to "../ValtherisItems/build/libs", "include" to listOf("*.jar"))))
+
     implementation(libs.nashorn)
     implementation(libs.adventure.platform)
     implementation(libs.adventure.minimessage)
@@ -57,7 +59,7 @@ tasks {
         relocate("org.openjdk.nashorn", "com.extendedclip.deluxemenus.libs.nashorn")
         relocate("net.kyori", "com.extendedclip.deluxemenus.libs.adventure")
         relocate("org.bstats", "com.extendedclip.deluxemenus.libs.bstats")
-        archiveFileName.set("DeluxeMenus-${rootProject.version}.jar")
+        archiveFileName.set("ValtherisMenus-${rootProject.version}.jar")
     }
     java {
         sourceCompatibility = JavaVersion.VERSION_11

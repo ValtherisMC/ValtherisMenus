@@ -963,6 +963,24 @@ public class DeluxeMenusConfig {
                     invert = type == RequirementType.DOES_NOT_HAVE_ITEM;
                     req = new HasItemRequirement(plugin, wrapper, invert);
                     break;
+                case HAS_VALTHERIS_ITEM:
+                case DOES_NOT_HAVE_VALTHERIS_ITEM:
+                    ItemWrapper viWrapper = new ItemWrapper();
+                    if (c.contains(rPath + ".material")) {
+                        String viMaterial = c.getString(rPath + ".material");
+                        // Automatically prepend valtherisitems- prefix if not already present
+                        if (!viMaterial.toLowerCase().startsWith("valtherisitems-")) {
+                            viMaterial = "valtherisitems-" + viMaterial;
+                        }
+                        viWrapper.setMaterial(viMaterial);
+                    } else {
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "has-valtheris-item requirement at path: " + rPath + " does not contain a material: entry!");
+                        break;
+                    }
+                    viWrapper.setAmount(c.getInt(rPath + ".amount", 1));
+                    invert = type == RequirementType.DOES_NOT_HAVE_VALTHERIS_ITEM;
+                    req = new HasItemRequirement(plugin, viWrapper, invert);
+                    break;
                 case HAS_PERMISSION:
                 case DOES_NOT_HAVE_PERMISSION:
                     if (c.contains(rPath + ".permission")) {
